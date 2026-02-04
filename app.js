@@ -1,135 +1,87 @@
 import { db, storage } from "./firebase.js";
+import { collection, addDoc, getDocs, query, orderBy, serverTimestamp, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-import {
-collection,
-getDocs
-} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
-
-import {
-ref,
-uploadBytes
-} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-storage.js";
-
-const PASSWORD = "admin123";
-
-window.login = function(){
-
-if(document.getElementById("passwordInput").value === PASSWORD){
-document.getElementById("loginPage").style.display="none";
-document.getElementById("dashboard").style.display="block";
-loadDashboard();
+// ----- LOGIN -----
+const PASSWORD = "yourpassword"; // change here
+function login() {
+    const input = document.getElementById("passwordInput").value;
+    if(input === PASSWORD) {
+        document.getElementById("loginPage").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+        loadProducts();
+        loadExpenses();
+        renderCharts();
+    } else alert("Wrong password!");
 }
 
+// ----- PRODUCTS -----
+async function loadProducts() {
+    const prodCol = collection(db, "products");
+    const snapshot = await getDocs(query(prodCol, orderBy("createdAt","desc")));
+    const productList = document.getElementById("productList");
+    productList.innerHTML = "";
+    snapshot.forEach(docu => {
+        const data = docu.data();
+        const card = document.createElement("div");
+        card.className = "productCard";
+        card.innerHTML = `
+            <strong>${data.name}</strong><br>ID: ${data.productId}<br>Category: ${data.category || 'General'}
+            <button class="optionsBtn" onclick="editProduct('${docu.id}')">✎</button>
+            <button class="optionsBtn" onclick="deleteProduct('${docu.id}')">🗑</button>
+            <button onclick="openSaleModal('${docu.id}')">+ Sale</button>
+        `;
+        productList.appendChild(card);
+    });
 }
 
-async function getExchangeRate(){
+// Add/Edit/Delete products (functions similar to modals, saveProduct, closeProductModal...)
 
-let res = await fetch("https://api.exchangerate-api.com/v4/latest/USD");
-let data = await res.json();
-
-return data.rates.INR;
+// ----- EXPENSES -----
+async function loadExpenses() {
+    const expCol = collection(db,"expenses");
+    const snapshot = await getDocs(query(expCol,orderBy("date","desc")));
+    // Build monthly folders & playlist UI here
 }
 
-async function loadDashboard(){
+// Add expenses modal functions (saveExpense, closeExpenseModal)
 
-let sales = await getDocs(collection(db,"sales"));
-let expenses = await getDocs(collection(db,"expenses"));
-
-let income = 0;
-let expense = 0;
-
-let categoryMap = {};
-
-sales.forEach(doc=>{
-let d = doc.data();
-income += d.revenue;
-
-if(!categoryMap[d.category]) categoryMap[d.category]=0;
-categoryMap[d.category]+=d.revenue;
-});
-
-expenses.forEach(doc=>{
-expense += doc.data().amount;
-});
-
-let rate = await getExchangeRate();
-
-document.getElementById("income").innerText =
-income + " USD / " + (income*rate).toFixed(2) + " INR";
-
-document.getElementById("expense").innerText =
-expense + " USD / " + (expense*rate).toFixed(2) + " INR";
-
-document.getElementById("profit").innerText =
-(income-expense).toFixed(2);
-
-createCharts(categoryMap);
+// ----- SALES -----
+function openSaleModal(productDocId) {
+    // Fill modal info, then show modal
+}
+async function saveSale() {
+    // Record sale to Firestore with all calculations (fees, shipping, refunds)
 }
 
-function createCharts(categoryMap){
-
-new Chart(document.getElementById("categoryChart"),{
-type:"bar",
-data:{
-labels:Object.keys(categoryMap),
-datasets:[{
-label:"Category Sales",
-data:Object.values(categoryMap)
-}]
-}
-});
-
+// ----- PROFIT CALCULATION -----
+async function calculateTotals() {
+    // Total income = sum(sales revenue)
+    // Total expenses = sum(expenses + fees)
+    // Net Profit = income - expenses
+    // Update DOM
 }
 
-window.backupData = async function(){
-
-let products = await getDocs(collection(db,"products"));
-let sales = await getDocs(collection(db,"sales"));
-let expenses = await getDocs(collection(db,"expenses"));
-
-let backup = {
-products: products.docs.map(d=>d.data()),
-sales: sales.docs.map(d=>d.data()),
-expenses: expenses.docs.map(d=>d.data())
-};
-
-let jsonBlob = new Blob([JSON.stringify(backup)],{type:"application/json"});
-
-let filename = "backup-"+Date.now()+".json";
-
-downloadFile(jsonBlob,filename);
-
-uploadCloud(jsonBlob,filename);
-
+// ----- CHARTS -----
+function renderCharts() {
+    // Category sales, best-selling product, high-return products
 }
 
-function downloadFile(blob,name){
-
-let a = document.createElement("a");
-a.href = URL.createObjectURL(blob);
-a.download = name;
-a.click();
+// ----- BACKUP / EXPORT -----
+function backupData() {
+    // Export all Firestore collections as JSON to Firebase Storage
+}
+function exportExcel() {
+    // Convert all data to Excel using XLSX
 }
 
-async function uploadCloud(blob,name){
-
-let storageRef = ref(storage,"backups/"+name);
-await uploadBytes(storageRef,blob);
-
-alert("Backup Uploaded To Cloud");
+// ----- SEARCH & FILTER -----
+function searchProducts() {
+    // Filter product list based on name/id input
 }
 
-window.exportExcel = async function(){
-
-let sales = await getDocs(collection(db,"sales"));
-
-let data = sales.docs.map(d=>d.data());
-
-let ws = XLSX.utils.json_to_sheet(data);
-let wb = XLSX.utils.book_new();
-
-XLSX.utils.book_append_sheet(wb,ws,"Sales");
-
-XLSX.writeFile(wb,"sales-report.xlsx");
-
-}
+// ----- MODAL OPEN/CLOSE -----
+function openAddProductModal() { /* show modal */ }
+function closeProductModal() { /* hide modal */ }
+function openAddExpenseModal() { /* show modal */ }
+function closeExpenseModal() { /* hide modal */ }
+function closeSaleModal() { /* hide modal */ }
