@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expense Tracker V4</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+</head>
+
+<body>
+
+<div id="loginPage" class="centerBox">
+<h2>Login</h2>
+<input type="password" id="passwordInput" placeholder="Enter Password">
+<button onclick="login()">Login</button>
+</div>
+
+<div id="dashboard" class="container" style="display:none">
+
+<header class="topBar">
+<h1>Expense Dashboard</h1>
+
+<div class="topButtons">
+<button onclick="backupData()">Backup</button>
+<button onclick="exportExcel()">Export</button>
+</div>
+</header>
+
+<section class="statsGrid">
+<div class="statCard">
+<h3>Total Income</h3>
+<p id="income">0</p>
+</div>
+
+<div class="statCard">
+<h3>Total Expense</h3>
+<p id="expense">0</p>
+</div>
+
+<div class="statCard">
+<h3>Net Profit</h3>
+<p id="profit">0</p>
+</div>
+</section>
+
+<section class="chartSection">
+<div class="chartCard">
+<canvas id="salesChart"></canvas>
+</div>
+
+<div class="chartCard">
+<canvas id="categoryChart"></canvas>
+</div>
+</section>
+
+</div>
+
+<script type="module" src="firebase.js"></script>
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
